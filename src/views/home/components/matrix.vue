@@ -5,17 +5,19 @@
         <div>
             <img
                 v-if="bgSrc"
+                ref="bg"
                 :class="bem('bg')"
                 :src="bgSrc"
                 :style="{
                     width: bgWidth + 'px',
                     height: bgHeight + 'px'
-                }">
+                }"
+                @load="onBgLoad">
             <img
                 :class="bem('img')"
                 v-show="!start"
                 ref="img"
-                @load="onLoad"
+                @load="onImgLoad"
                 :style="imageStyle"
                 :src="src">
         </div>
@@ -34,14 +36,6 @@ export default {
             required: true
         },
         bgSrc: {
-            type: String,
-            default: ''
-        },
-        imgWidth: {
-            type: String,
-            default: ''
-        },
-        imgHeight: {
             type: String,
             default: ''
         },
@@ -67,13 +61,11 @@ export default {
             return {
                 transform: `matrix3d(${this.matrix})`,
                 opacity: this.start ? 0 : 1,
-                width: this.imgWidth + 'px',
-                height: this.imgHeight + 'px'
             };
         },
         matrix() {
-            const imgWidth = this.imgWidth || this.originImgWidth;
-            const imgHeight = this.imgHeight || this.originImgHeight;
+            const imgWidth = this.imgWidth;
+            const imgHeight = this.imgHeight;
             if (this.start) return null;
             const x0 = 0;
             const y0 = 0;
@@ -183,10 +175,22 @@ export default {
             this.points = [];
         },
 
-        onLoad() {
+        onImgLoad() {
             const node = this.$refs.img;
-            this.originImgWidth = node.offsetWidth;
-            this.originImgHeight = node.offsetHeight;
+            this.$emit('imgLoad', {
+                width: node.offsetWidth,
+                height: node.offsetHeight
+            });
+            this.imgWidth = node.offsetWidth;
+            this.imgHeight = node.offsetHeight;
+        },
+
+        onBgLoad() {
+            const node = this.$refs.bg;
+            this.$emit('bgLoad', {
+                width: node.offsetWidth,
+                height: node.offsetHeight
+            });
         },
     }
 };
@@ -212,14 +216,12 @@ export default {
         position: absolute;
         top: 0;
         left: 0;
-        width: 300px;
         transform-origin: 0 0;
         pointer-events: none;
     }
 
     &__bg {
         display: block;
-        width: 300px;
         z-index: -1;
         pointer-events: none;
     }
